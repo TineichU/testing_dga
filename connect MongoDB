@@ -15,20 +15,25 @@ def _connect_mongo(host, port, username, password, db):
     return conn[db]
 
 
-def read_mongo(db, collection, query={}, host='localhost', port=27017, username=None, password=None, no_id=True):
+def read_mongo(db, collection_dga,collection_time, query={}, host='localhost', port=27017, username=None, password=None, no_id=True):
     """ Read from Mongo and Store into DataFrame """
 
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
-
-    # Make a query to the specific DB and Collection
-    cursor = db[collection].find(query)
-
+    limit = 1000
+    cursor_timestamp = db[collection_time].find({}, {"time": 1})
+    while True:
+        cursor_domain_time = db[collection_dga].find({}, {"dns_query": 1, "@timestamp": {"$gt":cursor_timestamp}}).limit(1000)
+        if cursor_timestamp==None:
+            break
     # Expand the cursor and construct the DataFrame
-    df =  pd.DataFrame(list(cursor))
-
+    df = pd.DataFrame(list(cursor_domain_time))
+    #тут вывод
     # Delete the _id
     if no_id:
         del df['_id']
 
     return df
+
+if __name__ == "__main__":
+    df = read_mongo(db='dga_detection', host='10.101.26.246',collection_dga='dns_data', collection_time='time')
