@@ -21,10 +21,11 @@ def read_mongo(db, collection_dga,collection_time, query={}, host='localhost', p
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
     limit = 1000
+    print("1")
     cursor_timestamp = db[collection_time].find({}, {"time": 1})
     while True:
-        cursor_domain_time = db[collection_dga].find({}, {"dns_query": 1, "@timestamp": {"$gt":cursor_timestamp}}).limit(1000)
-        if cursor_timestamp==None:
+        cursor_domain_time = db[collection_dga].find({},{"and":[{{"$and""dns_query": 1},{ "@timestamp": {"$gt":cursor_timestamp}}}]}).limit(1000)
+        if cursor_domain_time==None:
             break
     # Expand the cursor and construct the DataFrame
     df = pd.DataFrame(list(cursor_domain_time))
