@@ -15,26 +15,26 @@ def _connect_mongo(host, port, username, password, db):
     return conn[db]
 
 
-def read_mongo(db, collection_dga,collection_time, query={}, host='localhost', port=27017, username=None, password=None, no_id=True):
+def read_mongo(db, collection_dga,collection_time, query={}, host='localhost', port=27017, username=None, password=None):
     """ Read from Mongo and Store into DataFrame """
 
     # Connect to MongoDB
     db = _connect_mongo(host=host, port=port, username=username, password=password, db=db)
     limit = 1000
-    print("1")
-    cursor_timestamp = db[collection_time].find({}, {"time": 1})
+    cursor_timestamp = db[collection_time].find({}, {"time": 1, "_id": 0})
+    cursor_timestamp = list(cursor_timestamp)
+    cursor_timestamp = cursor_timestamp[0]['time']
+    #в этом цикле будет анализ домена, потом по функциям разбить
     while True:
-        cursor_domain_time = db[collection_dga].find({},{"and":[{{"$and""dns_query": 1},{ "@timestamp": {"$gt":cursor_timestamp}}}]}).limit(1000)
+        cursor_domain_time = db[collection_dga].find({"@timestamp": {"$gte": cursor_timestamp}}, {"dns_query_name": 1, "@timestamp":1}).limit(1000)
         if cursor_domain_time==None:
             break
-    # Expand the cursor and construct the DataFrame
-    df = pd.DataFrame(list(cursor_domain_time))
+        df = pd.DataFrame(list(cursor_domain_time))
+        cursor_timestamp = df['@timestamp'][df.index[-1]]
     #тут вывод
-    # Delete the _id
-    if no_id:
-        del df['_id']
 
     return df
 
 if __name__ == "__main__":
-    df = read_mongo(db='dga_detection', host='10.101.26.246',collection_dga='dns_data', collection_time='time')
+    df = read_mongo(db='dga_detection', host='10.101.26.246',collection_dga='dns_data', collection_time='timestamp')
+    print(df.tail())
