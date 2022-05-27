@@ -43,8 +43,8 @@ app = Flask(__name__)
 
 @app.post('/predict')
 def predict():
-    df = read_mongo(db='dga_detection', host='10.101.26.246',collection_dga='dns_data', collection_time='timestamp')
-    return 1,200
+    df = read_mongo(db='dga_detection', host='10.101.26.245',collection_dga='dns_data', collection_time='timestamp')
+    return '1','200'
 
 
 if __name__ == '__main__':
